@@ -75,4 +75,32 @@ public class Airplane {
             currentFuel = fuelCapacity;
         }
     }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public Manufacturer getManufacturer() {
+        return manufacturer;
+    }
+
+    public double getFuelForKilometer() {
+        return fuelForKilometer;
+    }
+
+    public double getFuelCapacity() {
+        return fuelCapacity;
+    }
+
+    public double getCurrentFuel() {
+        return currentFuel;
+    }
+
+    public double getKilometersFlown() {
+        return kilometersFlown;
+    }
 }
