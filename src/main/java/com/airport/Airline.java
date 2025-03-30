@@ -48,4 +48,14 @@ public class Airline {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Airplane not found: " + id));
     }
+
+    public List<Airplane> getAirplanes() { return List.copyOf(airplanes); }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getMaxAirplanes() {
+        return maxAirplanes;
+    }
 }
