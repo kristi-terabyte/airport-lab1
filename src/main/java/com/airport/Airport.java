@@ -44,10 +44,42 @@ public class Airport {
         airlines.removeIf(a -> a.getName().equals(name));
     }
 
+    public void updateName(final String newName) {
+        if (newName == null || newName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Name cannot be empty");
+        }
+
+        this.name = newName;
+    }
+
+    public void toggleStatus() {
+        this.status = (status == Status.OPEN) ? Status.CLOSED : Status.OPEN;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
     public Airline findAirline(final String name) {
         return airlines.stream()
                 .filter(a -> a.getName().equals(name))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Airline not found: " + name));
+    }
+
+    public List<Airline> getAirlines() {
+        return List.copyOf(airlines);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public int getMaxAirlines() {
+        return maxAirlines;
     }
 }
