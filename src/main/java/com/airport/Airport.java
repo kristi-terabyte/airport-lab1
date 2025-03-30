@@ -2,6 +2,7 @@ package com.airport;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Airport {
     private String name;
@@ -81,5 +82,23 @@ public class Airport {
 
     public int getMaxAirlines() {
         return maxAirlines;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Airport airport = (Airport) o;
+        return maxAirlines == airport.maxAirlines && Objects.equals(name, airport.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, maxAirlines);
+    }
+
+    @Override
+    public String toString() {
+        return "Airport: " + name + "\nAirlines: " + airlines.size();
     }
 }

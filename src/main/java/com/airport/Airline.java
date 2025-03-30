@@ -58,4 +58,28 @@ public class Airline {
     public int getMaxAirplanes() {
         return maxAirplanes;
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        final Airline airline = (Airline) o;
+        return maxAirplanes == airline.maxAirplanes && Objects.equals(name, airline.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, maxAirplanes);
+    }
+
+    @Override
+    public String toString() {
+        return "Airline: " + name + "\nAirplanes: " + airplanes.size();
+    }
 }

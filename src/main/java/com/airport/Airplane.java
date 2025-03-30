@@ -1,5 +1,7 @@
 package com.airport;
 
+import java.util.Objects;
+
 public class Airplane {
     private final String id;
     private final String model;
@@ -102,5 +104,34 @@ public class Airplane {
 
     public double getKilometersFlown() {
         return kilometersFlown;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Airplane airplane = (Airplane) o;
+        return Double.compare(airplane.fuelForKilometer, fuelForKilometer) == 0 &&
+                Double.compare(airplane.fuelCapacity, fuelCapacity) == 0 &&
+                Objects.equals(id, airplane.id) &&
+                Objects.equals(model, airplane.model) &&
+                Objects.equals(manufacturer, airplane.manufacturer);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, model, manufacturer, fuelForKilometer, fuelCapacity);
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "Airplane{id='%s', model='%s', manufacturer=%s, fuel=%.1f/%.1fL, km=%.1f}",
+                this.id,
+                this.model,
+                this.manufacturer.getName(),
+                this.currentFuel,
+                this.fuelCapacity,
+                this.kilometersFlown);
     }
 }
