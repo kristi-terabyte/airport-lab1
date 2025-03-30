@@ -99,6 +99,6 @@ public class Airport {
 
     @Override
     public String toString() {
-        return "Airport: " + name + "\nAirlines: " + airlines.size();
+        return "Airport: " + name + " (" + status + ", Capacity: " + airlines.size() + "/" + maxAirlines + ")";
     }
 }

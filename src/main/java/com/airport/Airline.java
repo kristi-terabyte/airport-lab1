@@ -80,6 +80,7 @@ public class Airline {
 
     @Override
     public String toString() {
-        return "Airline: " + name + "\nAirplanes: " + airplanes.size();
+        return "Airline: " + name + " (Operational: " + isOperational() + ", Capacity: " + airplanes.size() + "/"
+                + maxAirplanes + ")";
     }
 }
