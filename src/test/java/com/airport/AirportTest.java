@@ -78,4 +78,47 @@ class AirportTest {
     void testFindNonExistingAirlineThrowsException() {
         assertThrows(IllegalArgumentException.class, () -> airport.findAirline("NonExistent"));
     }
+
+    // Airline Logic Tests
+    @Test
+    void testAddAirplaneWithinCapacity() {
+        airline.addAirplane(airplane);
+        assertEquals(1, airline.getAirplanes().size());
+        assertEquals(airplane, airline.findAirplane("A123"));
+    }
+
+    @Test
+    void testAddAirplaneExceedsCapacity() {
+        airline.addAirplane(airplane);
+        airline.addAirplane(new Airplane("A124", "747", manufacturer, 5.0, 600.0));
+        assertThrows(IllegalStateException.class,
+                () -> airline.addAirplane(new Airplane("A125", "757", manufacturer, 5.0, 700.0)));
+    }
+
+    @Test
+    void testRemoveAirplane() {
+        airline.addAirplane(airplane);
+        airline.removeAirplane("A123");
+        assertThrows(IllegalArgumentException.class, () -> airline.findAirplane("A123"));
+    }
+
+    @Test
+    void testUpdateAirlineName() {
+        airline.updateName("New Airline");
+        assertEquals("New Airline", airline.getName());
+    }
+
+    @Test
+    void testUpdateAirlineNameWithEmptyThrowsException() {
+        assertThrows(IllegalArgumentException.class, () -> airline.updateName(""));
+    }
+
+    @Test
+    void testIsOperational() {
+        assertFalse(airline.isOperational());
+        airline.addAirplane(airplane);
+        assertTrue(airline.isOperational());
+        airline.removeAirplane("A123");
+        assertFalse(airline.isOperational());
+    }
 }
