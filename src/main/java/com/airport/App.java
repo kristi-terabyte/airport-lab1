@@ -1,6 +1,9 @@
 package com.airport;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Scanner;
 
 public class App {
@@ -51,6 +54,29 @@ public class App {
     private static final String HELP_LIST = "list\nlist <airline>";
 
     private static Airport airport = new Airport("Global Airport", 10); // Default capacity
+    private static final String APP_DIR = "airport-app";
+    private static final Path DATA_FILE = getDataFilePath();
+
+    private static Path getDataBaseDir() {
+        final String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("win")) {
+            return Paths.get(System.getProperty("user.home"), APP_DIR);
+        }
+        if (System.getenv("XDG_STATE_HOME") != null && !System.getenv("XDG_STATE_HOME").isEmpty()) {
+            return Paths.get(System.getenv("XDG_STATE_HOME"), APP_DIR);
+        }
+        return Paths.get(System.getProperty("user.home"), ".local", "state", APP_DIR);
+    }
+
+    private static Path getDataFilePath() {
+        final Path baseDir = getDataBaseDir();
+        try {
+            Files.createDirectories(baseDir);
+        } catch (final IOException e) {
+            System.err.println("Warning: Could not create data directory - " + e.getMessage());
+        }
+        return baseDir.resolve("airlines.json");
+    }
 
     public static void main(final String[] args) {
         if (args.length == 0) {
