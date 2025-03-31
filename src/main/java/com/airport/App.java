@@ -26,9 +26,11 @@ public class App {
               fly <airline> <id> <kilometers>
               list
               list <airline>
+              export <airportSort> <airlineSort>
               help
               help <command>
               exit (interactive mode only)
+            Data is automatically saved after each operation and loaded on start.  
             """;
 
     private static final String HELP_NEW = "new <name> <maxAirlines>";
@@ -52,6 +54,7 @@ public class App {
     private static final String HELP_REFUEL = "refuel <airline> <id> [<amount>]";
     private static final String HELP_FLY = "fly <airline> <id> <kilometers>";
     private static final String HELP_LIST = "list\nlist <airline>";
+    private static final String HELP_EXPORT = "export <airportSort> <airlineSort>";
 
     private static Airport airport = new Airport("Global Airport", 10); // Default capacity
     private static final String APP_DIR = "airport-app";
@@ -76,6 +79,16 @@ public class App {
             System.err.println("Warning: Could not create data directory - " + e.getMessage());
         }
         return baseDir.resolve("airlines.json");
+    }
+
+    static {
+        try {
+            if (Files.exists(DATA_FILE)) {
+                airport = DataManager.importData(DATA_FILE);
+            }
+        } catch (final IOException e) {
+            System.err.println("Warning: Could not load data - " + e.getMessage());
+        }
     }
 
     public static void main(final String[] args) {
@@ -120,6 +133,7 @@ public class App {
                 case "refuel" -> handleRefuel(args);
                 case "fly" -> handleFly(args);
                 case "list" -> handleList(args);
+                case "export" -> handleExport(args);
                 case "help" -> handleHelp(args);
                 default -> {
                     System.out.println("Unknown command: " + args[0]);
@@ -135,11 +149,16 @@ public class App {
         System.out.println(HELP_MESSAGE);
     }
 
+    private static void saveData() throws IOException {
+        DataManager.exportData(airport, DATA_FILE, new ExportOpts(AirportSortOpts.NONE, AirlineSortOpts.NONE));
+    }
+
     private static void handleNew(String[] args) throws IOException {
         if (args.length != 3) {
             throw new IllegalArgumentException("Usage: " + HELP_NEW);
         }
         airport = new Airport(args[1], Integer.parseInt(args[2]));
+        saveData();
         System.out.println("Created new airport: " + args[1] + " (Max airlines: " + args[2] + ")");
     }
 
@@ -151,16 +170,19 @@ public class App {
             case "airport" -> {
                 if (args.length != 3) throw new IllegalArgumentException("Usage: update airport <newName>");
                 airport.updateName(args[2]);
+                saveData();
                 System.out.println("Renamed airport to: " + args[2]);
             }
             case "status" -> {
                 if (args.length != 2) throw new IllegalArgumentException("Usage: update status");
                 airport.toggleStatus();
+                saveData();
                 System.out.println("Airport status updated to: " + airport.getStatus());
             }
             case "airline" -> {
                 if (args.length != 4) throw new IllegalArgumentException("Usage: update airline <oldName> <newName>");
                 airport.findAirline(args[2]).updateName(args[3]);
+                saveData();
                 System.out.println("Renamed airline " + args[2] + " to " + args[3]);
             }
             default -> throw new IllegalArgumentException("Unknown subcommand: " + args[1]);
@@ -178,6 +200,7 @@ public class App {
                 }
                 final Airline airline = new Airline(args[2], Integer.parseInt(args[3]));
                 airport.addAirline(airline);
+                saveData();
                 System.out.println("Added airline: " + args[2] + " (Max airplanes: " + args[3] + ")");
             }
             case "airplane" -> {
@@ -190,6 +213,7 @@ public class App {
                 final Airplane airplane = new Airplane(
                         args[3], args[4], manufacturer, Double.parseDouble(args[7]), Double.parseDouble(args[8]));
                 airline.addAirplane(airplane);
+                saveData();
                 System.out.println("Added to " + args[2] + ": " + airplane);
             }
             default -> throw new IllegalArgumentException("Unknown subcommand: " + args[1]);
@@ -204,11 +228,13 @@ public class App {
             case "airline" -> {
                 if (args.length != 3) throw new IllegalArgumentException("Usage: remove airline <name>");
                 airport.removeAirline(args[2]);
+                saveData();
                 System.out.println("Removed airline: " + args[2]);
             }
             case "airplane" -> {
                 if (args.length != 4) throw new IllegalArgumentException("Usage: remove airplane <airline> <id>");
                 airport.findAirline(args[2]).removeAirplane(args[3]);
+                saveData();
                 System.out.println("Removed airplane " + args[3] + " from " + args[2]);
             }
             default -> throw new IllegalArgumentException("Unknown subcommand: " + args[1]);
@@ -239,6 +265,7 @@ public class App {
         final Airplane airplane = airport.findAirline(args[1]).findAirplane(args[2]);
         final double amount = args.length == 4 ? Double.parseDouble(args[3]) : airplane.getFuelCapacity() - airplane.getCurrentFuel();
         airplane.refuel(amount);
+        saveData();
         System.out.println(String.format("Refueled %s in %s by %.1f", args[2], args[1], amount));
     }
 
@@ -254,6 +281,7 @@ public class App {
             throw new IllegalStateException("Airline " + args[1] + " is not operational (no airplanes)");
         }
         airline.findAirplane(args[2]).fly(Double.parseDouble(args[3]));
+        saveData();
         System.out.println(String.format("Flew %s in %s for %s km", args[2], args[1], args[3]));
     }
 
@@ -280,6 +308,14 @@ public class App {
             return;
         }
         throw new IllegalArgumentException("Usage: " + HELP_LIST);
+    }
+
+    private static void handleExport(final String[] args) throws IOException {
+        if (args.length != 3) throw new IllegalArgumentException("Usage: " + HELP_EXPORT);
+        AirportSortOpts airportSort = AirportSortOpts.valueOf(args[1].toUpperCase());
+        AirlineSortOpts airlineSort = AirlineSortOpts.valueOf(args[2].toUpperCase());
+        DataManager.exportData(airport, DATA_FILE, new ExportOpts(airportSort, airlineSort));
+        System.out.println("Exported with sorting: " + airportSort + ", " + airlineSort);
     }
 
     private static void handleHelp(final String[] args) {
