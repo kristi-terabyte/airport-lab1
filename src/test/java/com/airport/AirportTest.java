@@ -121,4 +121,36 @@ class AirportTest {
         airline.removeAirplane("A123");
         assertFalse(airline.isOperational());
     }
+
+    // Airplane Logic Tests
+    @Test
+    void testFlyAirplaneWithEnoughFuel() {
+        airplane.fly(50);
+        assertEquals(250.0, airplane.getCurrentFuel(), 0.01);
+        assertEquals(50.0, airplane.getKilometersFlown(), 0.01);
+    }
+
+    @Test
+    void testFlyAirplaneWithoutEnoughFuel() {
+        assertThrows(IllegalStateException.class, () -> airplane.fly(200));
+    }
+
+    @Test
+    void testRefuelAirplane() {
+        airplane.fly(50);
+        airplane.refuel(50);
+        assertEquals(300.0, airplane.getCurrentFuel(), 0.01);
+    }
+
+    @Test
+    void testRefuelAirplaneOverCapacity() {
+        airplane.refuel(1000);
+        assertEquals(500.0, airplane.getCurrentFuel(), 0.01);
+    }
+
+    @Test
+    void testAirplaneConstructorWithInvalidFuelValues() {
+        assertThrows(IllegalArgumentException.class, () -> new Airplane("A124", "747", manufacturer, -5.0, 500.0));
+        assertThrows(IllegalArgumentException.class, () -> new Airplane("A124", "747", manufacturer, 5.0, -500.0));
+    }
 }
