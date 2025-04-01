@@ -1,7 +1,16 @@
 package com.airport;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,6 +26,97 @@ class AirportTest {
         airline = new Airline("Test Airline", 2);
         manufacturer = new Manufacturer("Boeing", "USA");
         airplane = new Airplane("A123", "737", manufacturer, 5.0, 500.0);
+    }
+
+    @Test
+    void testExportData(@TempDir Path tempDir) throws IOException {
+        airport.addAirline(airline);
+        airline.addAirplane(airplane);
+        Path testFile = tempDir.resolve("test-export.json");
+
+        DataManager.exportData(airport, testFile, new ExportOpts(AirportSortOpts.NONE, AirlineSortOpts.NONE));
+
+        // Deserialize JSON to a Map
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> exportedData = mapper.readValue(testFile.toFile(),
+                new TypeReference<Map<String, Object>>() {
+                });
+
+        // Check top-level fields
+        assertEquals("Test Airport", exportedData.get("name"));
+        assertEquals(2, exportedData.get("maxAirlines"));
+        assertEquals("OPEN", exportedData.get("status"));
+
+        // Check airlines list
+        List<Map<String, Object>> airlines = (List<Map<String, Object>>) exportedData.get("airlines");
+        assertEquals(1, airlines.size());
+        Map<String, Object> airlineData = airlines.get(0);
+        assertEquals("Test Airline", airlineData.get("name"));
+        assertEquals(2, airlineData.get("maxAirplanes"));
+        assertEquals(true, airlineData.get("operational")); // Assuming operational is included
+
+        // Check airplanes list
+        List<Map<String, Object>> airplanes = (List<Map<String, Object>>) airlineData.get("airplanes");
+        assertEquals(1, airplanes.size());
+        Map<String, Object> airplaneData = airplanes.get(0);
+        assertEquals("A123", airplaneData.get("id"));
+        assertEquals("737", airplaneData.get("model"));
+        assertEquals(5.0, (Double) airplaneData.get("fuelForKilometer"), 0.01);
+        assertEquals(500.0, (Double) airplaneData.get("fuelCapacity"), 0.01);
+        assertEquals(500.0, (Double) airplaneData.get("currentFuel"), 0.01);
+        assertEquals(0.0, (Double) airplaneData.get("kilometersFlown"), 0.01);
+
+        // Check manufacturer
+        Map<String, String> manufacturerData = (Map<String, String>) airplaneData.get("manufacturer");
+        assertEquals("Boeing", manufacturerData.get("name"));
+        assertEquals("USA", manufacturerData.get("country"));
+    }
+
+    @Test
+    void testImportData(@TempDir final Path tempDir) throws IOException {
+        final Path testFile = tempDir.resolve("test-import.json");
+        final String json = String.format(
+                "{\"name\":\"Imported Airport\",\"maxAirlines\":3,\"status\":\"OPEN\",\"airlines\":[" +
+                        "{\"name\":\"Imported Airline\",\"maxAirplanes\":1,\"airplanes\":[" +
+                        "{\"id\":\"I001\",\"model\":\"A320\",\"manufacturer\":{\"name\":\"Airbus\",\"country\":\"France\"},"
+                        +
+                        "\"fuelForKilometer\":4.0,\"fuelCapacity\":400.0,\"currentFuel\":200.0,\"kilometersFlown\":100.0}"
+                        +
+                        "]}]}");
+        Files.writeString(testFile, json);
+
+        final Airport imported = DataManager.importData(testFile);
+
+        final ObjectMapper mapper = new ObjectMapper();
+        final Map<String, Object> importedMap = mapper.readValue(Files.readString(testFile), Map.class);
+
+        assertEquals("Imported Airport", importedMap.get("name"));
+        assertEquals(3, importedMap.get("maxAirlines"));
+        assertEquals("OPEN", importedMap.get("status"));
+
+        // Check airlines list
+        final List<Map<String, Object>> airlines = (List<Map<String, Object>>) importedMap.get("airlines");
+        assertEquals(1, airlines.size());
+
+        final Map<String, Object> airlineMap = airlines.get(0);
+        assertEquals("Imported Airline", airlineMap.get("name"));
+        assertEquals(1, airlineMap.get("maxAirplanes"));
+
+        // Check airplanes list
+        final List<Map<String, Object>> airplanes = (List<Map<String, Object>>) airlineMap.get("airplanes");
+        assertEquals(1, airplanes.size());
+
+        final Map<String, Object> airplaneMap = airplanes.get(0);
+        assertEquals("I001", airplaneMap.get("id"));
+        assertEquals("A320", airplaneMap.get("model"));
+        assertEquals(4.0, (Double) airplaneMap.get("fuelForKilometer"), 0.01);
+        assertEquals(400.0, (Double) airplaneMap.get("fuelCapacity"), 0.01);
+        assertEquals(200.0, (Double) airplaneMap.get("currentFuel"), 0.01);
+        assertEquals(100.0, (Double) airplaneMap.get("kilometersFlown"), 0.01);
+
+        final Map<String, String> manufacturerMap = (Map<String, String>) airplaneMap.get("manufacturer");
+        assertEquals("Airbus", manufacturerMap.get("name"));
+        assertEquals("France", manufacturerMap.get("country"));
     }
 
     // Airport Logic Tests
@@ -125,7 +225,7 @@ class AirportTest {
     // Airplane Logic Tests
     @Test
     void testFlyAirplaneWithEnoughFuel() {
-        airplane.fly(50);
+        airplane.fly(50);//currKilometers:0->50,currFuel:500->500-(50*5)
         assertEquals(250.0, airplane.getCurrentFuel(), 0.01);
         assertEquals(50.0, airplane.getKilometersFlown(), 0.01);
     }
